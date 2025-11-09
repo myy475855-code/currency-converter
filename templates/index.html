@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Global Currency Converter</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+  <div class="card shadow-lg p-4">
+    <h3 class="text-center mb-4">🌍 Global Currency Converter</h3>
+
+    <form id="convertForm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="amount" class="form-label">Amount</label>
+          <input type="number" class="form-control" id="amount" name="amount" placeholder="Enter amount" required>
+        </div>
+        <div class="col-md-4">
+          <label for="from" class="form-label">From</label>
+          <select class="form-select" id="from" name="from" required></select>
+        </div>
+        <div class="col-md-4">
+          <label for="to" class="form-label">To</label>
+          <select class="form-select" id="to" name="to" required></select>
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        <button type="submit" class="btn btn-primary px-5">Convert</button>
+      </div>
+    </form>
+
+    <div class="mt-4" id="result" style="display:none;">
+      <h5 class="text-center">💱 Conversion Result</h5>
+      <p class="text-center fs-5" id="resultText"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Embed currencies JSON including PKR
+const currencies = {
+    "USD": "United States Dollar",
+    "EUR": "Euro",
+    "GBP": "British Pound Sterling",
+    "INR": "Indian Rupee",
+    "PKR": "Pakistani Rupee",
+    "CNY": "Chinese Yuan",
+    "JPY": "Japanese Yen",
+    "AUD": "Australian Dollar",
+    "CAD": "Canadian Dollar",
+    "CHF": "Swiss Franc",
+    "SGD": "Singapore Dollar",
+    "NZD": "New Zealand Dollar",
+    "ZAR": "South African Rand",
+    "BRL": "Brazilian Real",
+    "RUB": "Russian Ruble",
+    "HKD": "Hong Kong Dollar",
+    "KRW": "South Korean Won",
+    "MXN": "Mexican Peso",
+    "THB": "Thai Baht",
+    "NOK": "Norwegian Krone"
+};
+
+// Populate dropdowns
+function populateDropdowns() {
+    const fromSelect = $('#from');
+    const toSelect = $('#to');
+
+    Object.keys(currencies).forEach(code => {
+        const name = currencies[code];
+        fromSelect.append(new Option(`${code} - ${name}`, code));
+        toSelect.append(new Option(`${code} - ${name}`, code));
+    });
+
+    fromSelect.val('USD');  // default
+    toSelect.val('PKR');    // default
+
+    $('#from, #to').select2({ placeholder: "Select a currency" });
+}
+
+$(document).ready(function() {
+    populateDropdowns();
+});
+
+// Handle conversion using backend API
+document.getElementById('convertForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const amount = document.getElementById('amount').value;
+    const from = document.getElementById('from').value;
+    const to = document.getElementById('to').value;
+
+    try {
+        const response = await fetch(`/convert?from=${from}&to=${to}&amount=${amount}`);
+        const data = await response.json();
+        const resultDiv = document.getElementById('result');
+        const resultText = document.getElementById('resultText');
+
+        if (data.error) {
+            resultText.textContent = "❌ Error: " + data.error;
+        } else {
+            resultText.textContent = `${data.amount} ${data.from} = ${data.converted_amount} ${data.to} (Rate: ${data.rate.toFixed(4)})`;
+        }
+        resultDiv.style.display = 'block';
+    } catch (error) {
+        alert("Error performing conversion.");
+        console.error(error);
+    }
+});
+</script>
+
+</body>
+</html>
