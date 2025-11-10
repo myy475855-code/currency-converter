@@ -2,117 +2,351 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Global Currency Converter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌍 Global Currency Converter</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <style>
+    /* Full-screen video background */
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+    #bgVideo {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      filter: brightness(0.5); /* dim video for readability */
+    }
+
+    /* Card styling */
+    .converter-card {
+      border: none;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 450px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+      transition: transform 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    .converter-card:hover {
+      transform: translateY(-5px);
+    }
+
+    h3 {
+      font-weight: 700;
+      color: #333;
+    }
+
+    .select2-container--bootstrap5 .select2-selection--single {
+      height: calc(2.5rem + 2px);
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
+
+    #result {
+      background-color: #f0f4ff;
+      border-left: 5px solid #2575fc;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    .btn-primary {
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      border: none;
+      transition: 0.3s ease;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(to right, #2575fc, #6a11cb);
+    }
+
+    /* Center content vertically */
+    .container-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Responsive tweaks */
+    @media(max-width: 576px) {
+      .converter-card {
+        padding: 20px;
+      }
+    }
+  </style>
 </head>
-<body class="bg-light">
 
-<div class="container mt-5">
-  <div class="card shadow-lg p-4">
-    <h3 class="text-center mb-4">🌍 Global Currency Converter</h3>
+<body>
 
-    <form id="convertForm">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label for="amount" class="form-label">Amount</label>
-          <input type="number" class="form-control" id="amount" name="amount" placeholder="Enter amount" required>
+  <!-- Background video -->
+  <video id="bgVideo" autoplay muted loop>
+    <source src="https://cdn.pixabay.com/vimeo/323134582/money_falling.mp4?width=1280&hash=4f0c49bb14e4ad81838ec89d490ed7d3734802cd" type="video/mp4">
+    Your browser does not support HTML5 video.
+  </video>
+
+  <div class="container-wrapper">
+    <div class="converter-card text-center">
+      <h3 class="mb-4">🌍 Global Currency Converter</h3>
+
+      <form id="convertForm" class="px-3">
+        <div class="mb-3">
+          <label for="amount" class="form-label fw-semibold">Amount</label>
+          <input type="number" class="form-control form-control-lg" id="amount" name="amount" placeholder="Enter amount" required>
         </div>
-        <div class="col-md-4">
-          <label for="from" class="form-label">From</label>
-          <select class="form-select" id="from" name="from" required></select>
+
+        <div class="mb-3">
+          <label for="from" class="form-label fw-semibold">From</label>
+          <select class="form-select" id="from" name="from" required>
+            <option value="">Select</option>
+          </select>
         </div>
-        <div class="col-md-4">
-          <label for="to" class="form-label">To</label>
-          <select class="form-select" id="to" name="to" required></select>
+
+        <div class="mb-3">
+          <label for="to" class="form-label fw-semibold">To</label>
+          <select class="form-select" id="to" name="to" required>
+            <option value="">Select</option>
+          </select>
         </div>
+
+        <div class="d-grid mt-4">
+          <button type="submit" class="btn btn-primary btn-lg fw-semibold">Convert 💱</button>
+        </div>
+      </form>
+
+      <div class="mt-4" id="result" style="display:none;">
+        <h5 class="mb-2">Conversion Result</h5>
+        <p class="fs-5 mb-0" id="resultText"></p>
       </div>
-
-      <div class="text-center mt-4">
-        <button type="submit" class="btn btn-primary px-5">Convert</button>
-      </div>
-    </form>
-
-    <div class="mt-4" id="result" style="display:none;">
-      <h5 class="text-center">💱 Conversion Result</h5>
-      <p class="text-center fs-5" id="resultText"></p>
     </div>
   </div>
-</div>
 
-<script>
-// Embed currencies JSON including PKR
-const currencies = {
-    "USD": "United States Dollar",
+  <script>
+    const currencies = {
+    "AFN": "Afghan Afghani",
     "EUR": "Euro",
-    "GBP": "British Pound Sterling",
-    "INR": "Indian Rupee",
-    "PKR": "Pakistani Rupee",
-    "CNY": "Chinese Yuan",
-    "JPY": "Japanese Yen",
+    "ALL": "Albanian Lek",
+    "DZD": "Algerian Dinar",
+    "USD": "United States Dollar",
+    "AOA": "Angolan Kwanza",
+    "XCD": "East Caribbean Dollar",
+    "ARS": "Argentine Peso",
+    "AMD": "Armenian Dram",
+    "AWG": "Aruban Florin",
+    "SHP": "Saint Helena Pound",
     "AUD": "Australian Dollar",
-    "CAD": "Canadian Dollar",
-    "CHF": "Swiss Franc",
-    "SGD": "Singapore Dollar",
-    "NZD": "New Zealand Dollar",
-    "ZAR": "South African Rand",
+    "AZN": "Azerbaijani Manat",
+    "BSD": "Bahamian Dollar",
+    "BHD": "Bahraini Dinar",
+    "BDT": "Bangladeshi Taka",
+    "BBD": "Barbadian Dollar",
+    "BYN": "Belarusian Ruble",
+    "BZD": "Belize Dollar",
+    "XOF": "West African CFA Franc",
+    "BMD": "Bermudian Dollar",
+    "BTN": "Bhutanese Ngultrum",
+    "BOB": "Bolivian Boliviano",
+    "BWP": "Botswana Pula",
     "BRL": "Brazilian Real",
-    "RUB": "Russian Ruble",
+    "BND": "Brunei Dollar",
+    "BGN": "Bulgarian Lev",
+    "BIF": "Burundi Franc",
+    "CVE": "Cabo Verdean Escudo",
+    "KHR": "Cambodian Riel",
+    "XAF": "Central African CFA Franc",
+    "CAD": "Canadian Dollar",
+    "KYD": "Cayman Islands Dollar",
+    "CLP": "Chilean Peso",
+    "CNY": "Chinese Yuan Renminbi",
+    "COP": "Colombian Peso",
+    "KMF": "Comorian Franc",
+    "CDF": "Congolese Franc",
+    "CRC": "Costa Rican Colon",
+    "CUP": "Cuban Peso",
+    "ANG": "Netherlands Antillean Guilder",
+    "CZK": "Czech Koruna",
+    "DKK": "Danish Krone",
+    "DJF": "Djiboutian Franc",
+    "DOP": "Dominican Peso",
+    "EGP": "Egyptian Pound",
+    "BTC": "Bitcoin",
+    "ERN": "Eritrean Nakfa",
+    "SZL": "Swazi Lilangeni",
+    "ETB": "Ethiopian Birr",
+    "FKP": "Falkland Islands Pound",
+    "FJD": "Fijian Dollar",
+    "GMD": "Gambian Dalasi",
+    "GEL": "Georgian Lari",
+    "GHS": "Ghanaian Cedi",
+    "GIP": "Gibraltar Pound",
+    "DKK": "Danish Krone",
+    "GTQ": "Guatemalan Quetzal",
+    "GGP": "Guernsey Pound",
+    "GNF": "Guinean Franc",
+    "GYD": "Guyanese Dollar",
+    "HTG": "Haitian Gourde",
+    "HNL": "Honduran Lempira",
     "HKD": "Hong Kong Dollar",
-    "KRW": "South Korean Won",
+    "HUF": "Hungarian Forint",
+    "ISK": "Icelandic Krona",
+    "INR": "Indian Rupee",
+    "IDR": "Indonesian Rupiah",
+    "XDR": "Special Drawing Rights (IMF)",
+    "IRR": "Iranian Rial",
+    "IQD": "Iraqi Dinar",
+    "IMP": "Manx Pound",
+    "ILS": "Israeli New Shekel",
+    "JMD": "Jamaican Dollar",
+    "JPY": "Japanese Yen",
+    "JEP": "Jersey Pound",
+    "JOD": "Jordanian Dinar",
+    "KZT": "Kazakhstani Tenge",
+    "KES": "Kenyan Shilling",
+    "KWD": "Kuwaiti Dinar",
+    "KGS": "Kyrgyzstani Som",
+    "LAK": "Lao Kip",
+    "LBP": "Lebanese Pound",
+    "LSL": "Lesotho Loti",
+    "LRD": "Liberian Dollar",
+    "LYD": "Libyan Dinar",
+    "CHF": "Swiss Franc",
+    "MOP": "Macanese Pataca",
+    "MGA": "Malagasy Ariary",
+    "MWK": "Malawian Kwacha",
+    "MYR": "Malaysian Ringgit",
+    "MVR": "Maldivian Rufiyaa",
+    "MRU": "Mauritanian Ouguiya",
+    "MUR": "Mauritian Rupee",
     "MXN": "Mexican Peso",
+    "MDL": "Moldovan Leu",
+    "MNT": "Mongolian Tugrik",
+    "MAD": "Moroccan Dirham",
+    "MZN": "Mozambican Metical",
+    "MMK": "Myanmar Kyat",
+    "NAD": "Namibian Dollar",
+    "NPR": "Nepalese Rupee",
+    "NZD": "New Zealand Dollar",
+    "NIO": "Nicaraguan Cordoba",
+    "NGN": "Nigerian Naira",
+    "NOK": "Norwegian Krone",
+    "OMR": "Omani Rial",
+    "PKR": "Pakistani Rupee",
+    "PGK": "Papua New Guinean Kina",
+    "PYG": "Paraguayan Guarani",
+    "PEN": "Peruvian Sol",
+    "PHP": "Philippine Peso",
+    "PLN": "Polish Zloty",
+    "QAR": "Qatari Riyal",
+    "RON": "Romanian Leu",
+    "RUB": "Russian Ruble",
+    "RWF": "Rwandan Franc",
+    "SHP": "Saint Helena Pound",
+    "WST": "Samoan Tala",
+    "STN": "Sao Tome and Principe Dobra",
+    "SAR": "Saudi Arabian Riyal",
+    "RSD": "Serbian Dinar",
+    "SCR": "Seychellois Rupee",
+    "SLE": "Sierra Leonean Leone",
+    "SGD": "Singapore Dollar",
+    "SBD": "Solomon Islands Dollar",
+    "SOS": "Somali Shilling",
+    "ZAR": "South African Rand",
+    "KRW": "South Korean Won",
+    "SSP": "South Sudanese Pound",
+    "LKR": "Sri Lankan Rupee",
+    "SDG": "Sudanese Pound",
+    "SRD": "Surinamese Dollar",
+    "SEK": "Swedish Krona",
+    "SYP": "Syrian Pound",
+    "TWD": "New Taiwan Dollar",
+    "TJS": "Tajikistani Somoni",
+    "TZS": "Tanzanian Shilling",
     "THB": "Thai Baht",
-    "NOK": "Norwegian Krone"
-};
+    "TOP": "Tongan Pa’anga",
+    "TTD": "Trinidad and Tobago Dollar",
+    "TND": "Tunisian Dinar",
+    "TRY": "Turkish Lira",
+    "TMT": "Turkmen Manat",
+    "UGX": "Ugandan Shilling",
+    "UAH": "Ukrainian Hryvnia",
+    "AED": "UAE Dirham",
+    "GBP": "Pound Sterling",
+    "UYU": "Uruguayan Peso",
+    "UZS": "Uzbekistani Som",
+    "VUV": "Vanuatu Vatu",
+    "VES": "Venezuelan Bolivar",
+    "VND": "Vietnamese Dong",
+    "XPF": "CFP Franc",
+    "YER": "Yemeni Rial",
+    "ZMW": "Zambian Kwacha",
+    "ZWL": "Zimbabwean Dollar"
+    };
 
-// Populate dropdowns
-function populateDropdowns() {
-    const fromSelect = $('#from');
-    const toSelect = $('#to');
+    function populateDropdowns() {
+      const fromSelect = $('#from');
+      const toSelect = $('#to');
 
-    Object.keys(currencies).forEach(code => {
+      Object.keys(currencies).forEach(code => {
         const name = currencies[code];
         fromSelect.append(new Option(`${code} - ${name}`, code));
         toSelect.append(new Option(`${code} - ${name}`, code));
+      });
+
+      fromSelect.val('USD');
+      toSelect.val('PKR');
+
+      $('#from, #to').select2({ placeholder: "Select a currency", theme: "bootstrap-5" });
+    }
+
+    $(document).ready(function() {
+      populateDropdowns();
     });
 
-    fromSelect.val('USD');  // default
-    toSelect.val('PKR');    // default
+    document.getElementById('convertForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const amount = document.getElementById('amount').value;
+      const from = document.getElementById('from').value;
+      const to = document.getElementById('to').value;
 
-    $('#from, #to').select2({ placeholder: "Select a currency" });
-}
-
-$(document).ready(function() {
-    populateDropdowns();
-});
-
-// Handle conversion using backend API
-document.getElementById('convertForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const amount = document.getElementById('amount').value;
-    const from = document.getElementById('from').value;
-    const to = document.getElementById('to').value;
-
-    try {
+      try {
         const response = await fetch(`/convert?from=${from}&to=${to}&amount=${amount}`);
         const data = await response.json();
         const resultDiv = document.getElementById('result');
         const resultText = document.getElementById('resultText');
 
         if (data.error) {
-            resultText.textContent = "❌ Error: " + data.error;
+          resultText.textContent = "❌ Error: " + data.error;
         } else {
-            resultText.textContent = `${data.amount} ${data.from} = ${data.converted_amount} ${data.to} (Rate: ${data.rate.toFixed(4)})`;
+          resultText.textContent = `${data.amount} ${data.from} = ${data.converted_amount} ${data.to} (Rate: ${data.rate.toFixed(4)})`;
         }
         resultDiv.style.display = 'block';
-    } catch (error) {
+      } catch (error) {
         alert("Error performing conversion.");
         console.error(error);
-    }
-});
-</script>
+      }
+    });
+  </script>
 
 </body>
 </html>
